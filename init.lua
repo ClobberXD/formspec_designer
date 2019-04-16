@@ -26,13 +26,28 @@ end
 
 -- Load/save/delete dialogs
 local function show_scripts_list(name)
-	-- TODO
+	minetest.chat_send_player(name, "show_scripts_list")
 end
 
 -- Editor window
 local function show_editor(name)
-	-- TODO
+	minetest.chat_send_player(name, "show_editor")
 end
+
+minetest.register_on_player_receive_fields(function(player, formname, fields)
+	if not player then
+		return
+	end
+	local name = player:get_player_name()
+
+	if formname == "formspec_designer:menu" then
+		if fields.btn_menu_new then
+			show_editor(name)
+		elseif fields.btn_menu_load or fields.btn_menu_delete then
+			show_scripts_list(name)
+		end
+	end
+end)
 
 minetest.register_chatcommand("fd", {
 	func = function(name)
@@ -40,6 +55,13 @@ minetest.register_chatcommand("fd", {
 			return false, "Insufficient privileges! You need to either use" ..
 					" this mod in singleplayer, or have the server priv."
 		end
+
+		if not minetest.get_player_by_name(name) then
+			return false, "You must be online to open the formspec designer!"
+		end
+
+		minetest.log("action", "[formspec_designer] Player " .. name ..
+				" opens formspec designer.")
 
 		local player = players[name]
 		if not player then
@@ -56,8 +78,8 @@ minetest.register_chatcommand("fd", {
 		elseif player.state == fd_EDITOR then
 			show_editor(name)
 		else
-			minetest.log("warning", "formspec_designer: Corrupted player state (" ..
-					player.state .. ") for " .. name .. "!")
+			minetest.log("warning", "[formspec_designer] Corrupted player" ..
+					" state (" .. player.state .. ") for " .. name .. "!")
 
 			if player.script then
 				show_editor(name)
