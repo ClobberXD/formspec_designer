@@ -21,6 +21,7 @@ local function get_state(name)
 	return players[name].c_state, players[name].p_state
 end
 
+-- Update p_state to store the old c_state, and set c_state to new_state
 local function update_state(name, new_state)
 	players[name].p_state = players[name].c_state
 	players[name].c_state = new_state
@@ -47,43 +48,66 @@ local function show_menu(name)
 	]])
 end
 
--- Scripts list
-local function get_scripts_list(name)
-	return "textlist[0,0;4,4;scripts_list;" ..
-			table.concat(minetest.get_dir_list(
-					scripts_dir .. name .. "/", false), ",") ..
-			"]"
-end
-
+-- Load dialog
 local function show_load_dlg(name)
 	update_state(name, fd_LOAD)
-	minetest.show_formspec(name, "formspec_designer:dlg_load", "size[4,5]" ..
-			"container[0,0]" ..
-			get_scripts_list(name) ..
-			"container_end[]" ..
-			"button[0,4;2,1;btn_dlg_back;Back]" ..
-			"button[2,4;2,1;btn_dlg_load;Load]")
+	local list = scripts[name]
+	local fs = [[
+		size[4,5]
+		button[0,4;2,1;btn_dlg_back;Back]
+	]]
+
+	if list and #list > 0 then
+		fs = fs .. "textlist[0,0;3.8,4;scripts_list;" ..
+				table.concat(list, ",") .. "]" ..
+				"button[2,4;2,1;btn_dlg_load;Load]"
+	else
+		fs = fs .. "label[0,2;No saved scripts found!]"
+	end
+
+	minetest.show_formspec(name, "formspec_designer:dlg_load", fs)
 end
 
+-- Save dialog
 local function show_save_dlg(name)
 	update_state(name, fd_SAVE)
-	minetest.show_formspec(name, "formspec_designer:dlg_save", "size[4,6]" ..
-			"container[0,0]" ..
-			get_scripts_list(name) ..
-			"container_end[]" ..
-			"field[0,4;4,1;field_dlg_save;;]" ..
-			"button[0,5;2,1;btn_dlg_back;Back]" ..
-			"button[2,5;2,1;btn_dlg_save;Save]")
+
+	local list = scripts[name]
+	local fs = [[
+		size[4,6]
+		field[0,4;4,1;field_dlg_save;;]
+		button[0,5;2,1;btn_dlg_back;Back]
+		button[2,5;2,1;btn_dlg_save;Save]
+	]]
+
+	if list and #list > 0 then
+		fs = fs .. "textlist[0,0;3.8,4;scripts_list;" ..
+				table.concat(list, ",") .. "]"
+	else
+		fs = fs .. "label[0,2;No saved scripts found!]"
+	end
+
+	minetest.show_formspec(name, "formspec_designer:dlg_save", fs)
 end
 
+-- Delete dialog
 local function show_delete_dlg(name)
 	update_state(name, fd_DELETE)
-	minetest.show_formspec(name, "formspec_designer:dlg_delete", "size[4,5]" ..
-			"container[0,0]" ..
-			get_scripts_list(name) ..
-			"container_end[]" ..
-			"button[0,4;2,1;btn_dlg_back;Back]" ..
-			"button[2,4;2,1;btn_dlg_delete;Delete]")
+	local list = scripts[name]
+	local fs = [[
+		size[4,5]
+		button[0,4;2,1;btn_dlg_back;Back]
+	]]
+
+	if list and #list > 0 then
+		fs = fs .. "textlist[0,0;3.8,4;scripts_list;" ..
+				table.concat(list, ",") .. "]" ..
+				"button[2,4;2,1;btn_dlg_delete;Delete]"
+	else
+		fs = fs .. "label[0,2;No saved scripts found!]"
+	end
+
+	minetest.show_formspec(name, "formspec_designer:dlg_delete", fs)
 end
 
 -- Editor window
