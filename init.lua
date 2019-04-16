@@ -9,13 +9,19 @@ local fd_SAVE   = 3
 local fd_EDITOR = 4
 
 -- Player table - stores each player's
--- * state : the page they are being shown
--- * script: contents of editor text-area, if state == fd_EDITOR
+-- * c_state : the page they are being shown
+-- * p_state : the page they were being shown; tracked to implement back button
+-- * script  : contents of editor text-area
 local players = {}
+
+local function update_state(name, new_state)
+	players[name].p_state = players[name].c_state
+	players[name].c_state = new_state
+end
 
 -- Main menu
 local function show_menu(name)
-	players[name].state = fd_MENU
+	update_state(name, fd_MENU)
 	minetest.show_formspec(name, "formspec_designer:menu", [[
 		size[4,4]
 		label[0,0;Formspec Designer]
@@ -34,7 +40,7 @@ local function get_scripts_list(name)
 end
 
 local function show_load_dlg(name)
-	players[name].state = fd_LOAD
+	update_state(name, fd_LOAD)
 	minetest.show_formspec(name, "formspec_designer:dlg_load", "size[4,5]" ..
 			"container[0,0]" ..
 			get_scripts_list(name) ..
@@ -44,7 +50,7 @@ local function show_load_dlg(name)
 end
 
 local function show_save_dlg(name)
-	players[name].state = fd_SAVE
+	update_state(name, fd_SAVE)
 	minetest.show_formspec(name, "formspec_designer:dlg_save", "size[4,6]" ..
 			"container[0,0]" ..
 			get_scripts_list(name) ..
@@ -55,7 +61,7 @@ local function show_save_dlg(name)
 end
 
 local function show_delete_dlg(name)
-	players[name].state = fd_DELETE
+	update_state(name, fd_DELETE)
 	minetest.show_formspec(name, "formspec_designer:dlg_delete", "size[4,5]" ..
 			"container[0,0]" ..
 			get_scripts_list(name) ..
@@ -102,23 +108,23 @@ minetest.register_chatcommand("fd", {
 
 		local player = players[name]
 		if not player then
-			players[name] = { state = fd_MENU }
+			players[name] = { c_state = fd_MENU }
 			player = players[name]
 		end
 
-		if player.state == fd_MENU then
+		if player.c_state == fd_MENU then
 			show_menu(name)
-		elseif player.state == fd_LOAD then
+		elseif player.c_state == fd_LOAD then
 			show_load_dlg(name)
-		elseif player.state == fd_DELETE then
+		elseif player.c_state == fd_DELETE then
 			show_delete_dlg(name)
-		elseif player.state == fd_SAVE and player.script then
+		elseif player.c_state == fd_SAVE and player.script then
 			show_save_dlg(name)
-		elseif player.state == fd_EDITOR then
+		elseif player.c_state == fd_EDITOR then
 			show_editor(name)
 		else
-			minetest.log("warning", "[formspec_designer] Corrupted player" ..
-					" state (" .. player.state .. ") for " .. name .. "!")
+			minetest.log("warning", "[formspec_designer] Invalid player" ..
+					" state (" .. player.c_state .. ") for " .. name .. "!")
 
 			if player.script then
 				show_editor(name)
