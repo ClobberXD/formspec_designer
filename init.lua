@@ -14,6 +14,10 @@ local fd_EDITOR = 4
 -- * script  : contents of editor text-area
 local players = {}
 
+local function get_state(name)
+	return players[name].c_state, players[name].p_state
+end
+
 local function update_state(name, new_state)
 	players[name].p_state = players[name].c_state
 	players[name].c_state = new_state
@@ -106,27 +110,26 @@ minetest.register_chatcommand("fd", {
 		minetest.log("action", "[formspec_designer] Player " .. name ..
 				" opens formspec designer.")
 
-		local player = players[name]
-		if not player then
+		if not players[name] then
 			players[name] = { c_state = fd_MENU }
-			player = players[name]
 		end
 
-		if player.c_state == fd_MENU then
+		local state = get_state(name)
+		if state == fd_MENU then
 			show_menu(name)
-		elseif player.c_state == fd_LOAD then
+		elseif state == fd_LOAD then
 			show_load_dlg(name)
-		elseif player.c_state == fd_DELETE then
+		elseif state == fd_DELETE then
 			show_delete_dlg(name)
-		elseif player.c_state == fd_SAVE and player.script then
+		elseif state == fd_SAVE and players[name].script then
 			show_save_dlg(name)
-		elseif player.c_state == fd_EDITOR then
+		elseif state == fd_EDITOR then
 			show_editor(name)
 		else
 			minetest.log("warning", "[formspec_designer] Invalid player" ..
-					" state (" .. player.c_state .. ") for " .. name .. "!")
+					" state (" .. state .. ") for " .. name .. "!")
 
-			if player.script then
+			if players[name].script then
 				show_editor(name)
 			else
 				show_menu(name)
