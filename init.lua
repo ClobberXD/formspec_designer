@@ -94,6 +94,20 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			show_delete_dlg(name)
 		end
 	end
+
+	if formname == "formspec_designer:dlg_load" or
+			formname == "formspec_designer:dlg_save" or
+			formname == "formspec_designer:dlg_delete" then
+		if fields.btn_dlg_back then
+			-- Get previous state
+			local _, state = get_state(name)
+			if state == fd_MENU then
+				show_menu(name)
+			elseif state == fd_EDITOR then
+				show_editor(name)
+			end
+		end
+	end
 end)
 
 minetest.register_chatcommand("fd", {
