@@ -1,4 +1,5 @@
 local singleplayer = minetest.is_singleplayer()
+local scripts_dir = minetest.get_worldpath() .. "/formspec_designer/"
 
 -- Player states enum
 local fd_MENU   = 0
@@ -24,9 +25,43 @@ local function show_menu(name)
 	]])
 end
 
--- Load/save/delete dialogs
-local function show_scripts_list(name)
-	minetest.chat_send_player(name, "show_scripts_list")
+-- Scripts list
+local function get_scripts_list(name)
+	return "textlist[0,0;4,4;scripts_list;" ..
+			table.concat(minetest.get_dir_list(
+					scripts_dir .. name .. "/", false), ",") ..
+			"]"
+end
+
+local function show_load_dlg(name)
+	players[name].state = fd_LOAD
+	minetest.show_formspec(name, "formspec_designer:dlg_load", "size[4,5]" ..
+			"container[0,0]" ..
+			get_scripts_list(name) ..
+			"container_end[]" ..
+			"button[0,4;2,1;btn_dlg_back;Back]" ..
+			"button[2,4;2,1;btn_dlg_load;Load]")
+end
+
+local function show_save_dlg(name)
+	players[name].state = fd_SAVE
+	minetest.show_formspec(name, "formspec_designer:dlg_save", "size[4,6]" ..
+			"container[0,0]" ..
+			get_scripts_list(name) ..
+			"container_end[]" ..
+			"field[0,4;4,1;field_dlg_save;;]" ..
+			"button[0,5;2,1;btn_dlg_back;Back]" ..
+			"button[2,5;2,1;btn_dlg_save;Save]")
+end
+
+local function show_delete_dlg(name)
+	players[name].state = fd_DELETE
+	minetest.show_formspec(name, "formspec_designer:dlg_delete", "size[4,5]" ..
+			"container[0,0]" ..
+			get_scripts_list(name) ..
+			"container_end[]" ..
+			"button[0,4;2,1;btn_dlg_back;Back]" ..
+			"button[2,4;2,1;btn_dlg_delete;Delete]")
 end
 
 -- Editor window
@@ -43,8 +78,10 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	if formname == "formspec_designer:menu" then
 		if fields.btn_menu_new then
 			show_editor(name)
-		elseif fields.btn_menu_load or fields.btn_menu_delete then
-			show_scripts_list(name)
+		elseif fields.btn_menu_load then
+			show_load_dlg(name)
+		elseif fields.btn_menu_delete then
+			show_delete_dlg(name)
 		end
 	end
 end)
@@ -71,10 +108,12 @@ minetest.register_chatcommand("fd", {
 
 		if player.state == fd_MENU then
 			show_menu(name)
-		elseif player.state == fd_LOAD or
-				player.state == fd_DELETE or
-				player.state == fd_SAVE then
-			show_scripts_list(name)
+		elseif player.state == fd_LOAD then
+			show_load_dlg(name)
+		elseif player.state == fd_DELETE then
+			show_delete_dlg(name)
+		elseif player.state == fd_SAVE and player.script then
+			show_save_dlg(name)
 		elseif player.state == fd_EDITOR then
 			show_editor(name)
 		else
