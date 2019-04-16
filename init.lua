@@ -14,6 +14,9 @@ local fd_EDITOR = 4
 -- * script  : contents of editor text-area
 local players = {}
 
+-- List of players' saved scripts
+local scripts = {}
+
 local function get_state(name)
 	return players[name].c_state, players[name].p_state
 end
@@ -21,6 +24,15 @@ end
 local function update_state(name, new_state)
 	players[name].p_state = players[name].c_state
 	players[name].c_state = new_state
+end
+
+-- Parse user's directory
+local function parse_scripts(name)
+	scripts[name] = minetest.get_dir_list(scripts_dir .. name .. "/", false)
+	local list = scripts[name]
+	local log_msg = (list and #list > 0) and dump(list) or "None found"
+	minetest.log("info", "[formspec_designer] Parsing scripts of " .. name ..
+			": " .. log_msg)
 end
 
 -- Main menu
@@ -126,6 +138,10 @@ minetest.register_chatcommand("fd", {
 
 		if not players[name] then
 			players[name] = { c_state = fd_MENU }
+		end
+
+		if not scripts[name] then
+			parse_scripts(name)
 		end
 
 		local state = get_state(name)
