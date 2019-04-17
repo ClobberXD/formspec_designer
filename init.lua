@@ -160,6 +160,25 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			end
 		end
 	end
+
+	if formname == "formspec_designer:editor" then
+		local contents = fields.editor_textarea
+		if contents and contents ~= "" then
+			players[name].script = contents
+		end
+
+		if fields.btn_editor_new then
+			show_editor(name, true)
+		elseif fields.btn_editor_load then
+			show_load_dlg(name)
+		elseif fields.btn_editor_save and players[name].script then
+			show_save_dlg(name)
+		elseif fields.btn_editor_delete then
+			show_delete_dlg(name)
+		elseif fields.btn_editor_preview then
+			show_preview(name, fields.chk_editor_prepend)
+		end
+	end
 end)
 
 minetest.register_chatcommand("fd", {
