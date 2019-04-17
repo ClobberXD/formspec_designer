@@ -111,7 +111,7 @@ local function show_delete_dlg(name)
 end
 
 -- Editor window
-local function show_editor(name)
+local function show_editor(name, clear)
 	update_state(name, fd_EDITOR)
 	local fs = [[
 		size[8,8]
@@ -122,13 +122,46 @@ local function show_editor(name)
 		button[6,7;2,1;btn_editor_preview;Preview]
 	]]
 
+	local script = players[name].script
+	script = not clear and (script or "") or ""
+
 	fs = fs .. "checkbox[6,4;chk_editor_prepend;" ..
 			minetest.formspec_escape("no_prepend[ ]") .. ";]" ..
 			"textarea[0.2,0.2;6,9;editor_textarea;" ..
 			"Formspec Designer - Script Editor;" ..
-			minetest.formspec_escape(players[name].script or "") .. "]"
+			minetest.formspec_escape(script) .. "]"
 
 	minetest.show_formspec(name, "formspec_designer:editor", fs)
+end
+
+local function show_preview(name, no_prepend)
+	local script = players[name].script
+
+	-- Insert no_prepend[] if no_prepend is true
+	if no_prepend then
+		-- Look for anchor element first
+		local part = script.match("anchor%[.+%]")
+
+		-- anchor[] doesn't exist, look for position[]
+		if not part then
+			part = script.match("position%[.+%]")
+		end
+
+		-- position[] doesn't exist, look for size[]
+		if not part then
+			part = script.match("size%[.+%]")
+		end
+
+		-- If part exists insert no_prepend[] right after
+		-- else insert at the beginning
+		if part then
+			script:gsub(part, part .. "no_prepend[]")
+		else
+			script = "no_prepend[]" .. script
+		end
+	end
+
+	minetest.show_formspec(name, "formspec_designer:preview", script)
 end
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
@@ -177,6 +210,12 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			show_delete_dlg(name)
 		elseif fields.btn_editor_preview then
 			show_preview(name, fields.chk_editor_prepend)
+		end
+	end
+
+	if formname == "formspec_designer:preview" then
+		if fields.quit then
+			show_editor(name)
 		end
 	end
 end)
