@@ -112,7 +112,23 @@ end
 
 -- Editor window
 local function show_editor(name)
-	minetest.chat_send_player(name, "show_editor")
+	update_state(name, fd_EDITOR)
+	local fs = [[
+		size[8,8]
+		button[6,0;2,1;btn_editor_new;New script]
+		button[6,1;2,1;btn_editor_load;Load script]
+		button[6,2;2,1;btn_editor_save;Save script]
+		button[6,3;2,1;btn_editor_delete;Delete script]
+		button[6,7;2,1;btn_editor_preview;Preview]
+	]]
+
+	fs = fs .. "checkbox[6,4;chk_editor_prepend;" ..
+			minetest.formspec_escape("no_prepend[ ]") .. ";]" ..
+			"textarea[0.2,0.2;6,9;editor_textarea;" ..
+			"Formspec Designer - Script Editor;" ..
+			minetest.formspec_escape(players[name].script or "") .. "]"
+
+	minetest.show_formspec(name, "formspec_designer:editor", fs)
 end
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
